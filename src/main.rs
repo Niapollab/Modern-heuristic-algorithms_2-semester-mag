@@ -1,7 +1,7 @@
 use cli_utils::{adj_matrix, solver};
 
 mod cli_utils;
-mod genetic_solver;
+mod ant_q_solver;
 mod greedy_solver;
 mod models;
 

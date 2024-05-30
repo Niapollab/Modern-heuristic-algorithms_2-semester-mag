@@ -6,7 +6,7 @@ use std::{
 
 use rand::Rng;
 
-use crate::{genetic_solver::GeneticSolver, greedy_solver::GreedySolver, models::Solver};
+use crate::{ant_q_solver::AntQSolver, greedy_solver::GreedySolver, models::Solver};
 
 #[derive(Debug)]
 pub enum ReadAdjMatrixFileError {
@@ -30,13 +30,13 @@ pub enum ReadAdjMatrixError {
 pub fn solver() -> Result<Box<dyn Solver>, ReadAlgorithmError> {
     let prompt = "Choose algorithm:
 1. Greedy algorithm
-2. Genetic algorithm
+2. Ant-Q algorithm
 Enter value: ";
 
     if let Some(option) = choose_option(prompt, 1, 2) {
         match option {
             1 => Ok(Box::new(GreedySolver {})),
-            2 => Ok(Box::new(GeneticSolver {})),
+            2 => Ok(Box::new(AntQSolver {})),
             _ => Err(ReadAlgorithmError::UnknownAlgorithm),
         }
     } else {
