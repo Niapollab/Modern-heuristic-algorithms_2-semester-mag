@@ -9,12 +9,6 @@ use rand::Rng;
 use crate::{ant_q_solver::AntQSolver, greedy_solver::GreedySolver, models::Solver};
 
 #[derive(Debug)]
-pub enum ReadAdjMatrixFileError {
-    FileNotFound,
-    RowsAndColumnsCountMismatch,
-}
-
-#[derive(Debug)]
 pub enum ReadAlgorithmError {
     UnknownAlgorithm,
 }
@@ -23,7 +17,8 @@ pub enum ReadAlgorithmError {
 pub enum ReadAdjMatrixError {
     FileNotFound,
     RowsAndColumnsCountMismatch,
-    UnebleToParseUnt32,
+    ElementsMustBeGreaterThanZero,
+    UnableToParseUnt32,
     UnknownSource,
 }
 
@@ -59,15 +54,7 @@ Enter value: ";
                 let mut path = String::new();
                 stdin().read_line(&mut path).unwrap();
 
-                return match adj_matrix_from_file(path.trim()) {
-                    Ok(matrix) => Ok(matrix),
-                    Err(ReadAdjMatrixFileError::FileNotFound) => {
-                        Err(ReadAdjMatrixError::FileNotFound)
-                    }
-                    Err(ReadAdjMatrixFileError::RowsAndColumnsCountMismatch) => {
-                        Err(ReadAdjMatrixError::RowsAndColumnsCountMismatch)
-                    }
-                };
+                adj_matrix_from_file(path.trim())
             }
             2 => {
                 print!("Enter rows count: ");
@@ -78,7 +65,7 @@ Enter value: ";
 
                 let rows_count: usize = match rows_count.trim().parse() {
                     Ok(number) => number,
-                    _ => return Err(ReadAdjMatrixError::UnebleToParseUnt32),
+                    _ => return Err(ReadAdjMatrixError::UnableToParseUnt32),
                 };
 
                 print!("Enter columns count: ");
@@ -89,7 +76,7 @@ Enter value: ";
 
                 let columns_count: usize = match columns_count.trim().parse() {
                     Ok(number) => number,
-                    _ => return Err(ReadAdjMatrixError::UnebleToParseUnt32),
+                    _ => return Err(ReadAdjMatrixError::UnableToParseUnt32),
                 };
 
                 print!("Enter minimum value: ");
@@ -100,7 +87,7 @@ Enter value: ";
 
                 let min_value: u32 = match min_value.trim().parse() {
                     Ok(number) => number,
-                    _ => return Err(ReadAdjMatrixError::UnebleToParseUnt32),
+                    _ => return Err(ReadAdjMatrixError::UnableToParseUnt32),
                 };
 
                 print!("Enter maximum value: ");
@@ -111,7 +98,7 @@ Enter value: ";
 
                 let max_value: u32 = match max_value.trim().parse() {
                     Ok(number) => number,
-                    _ => return Err(ReadAdjMatrixError::UnebleToParseUnt32),
+                    _ => return Err(ReadAdjMatrixError::UnableToParseUnt32),
                 };
 
                 Ok(random_adj_matrix(
@@ -146,17 +133,14 @@ fn random_adj_matrix(
     matrix
 }
 
-fn adj_matrix_from_file(path: &str) -> Result<Vec<Vec<u32>>, ReadAdjMatrixFileError> {
-    if let Ok(mut file) = File::open(path) {
-        if let Some(matrix) = adj_matrix_from_reader(&mut file) {
-            return Ok(matrix);
-        }
-        return Err(ReadAdjMatrixFileError::RowsAndColumnsCountMismatch);
+fn adj_matrix_from_file(path: &str) -> Result<Vec<Vec<u32>>, ReadAdjMatrixError> {
+    match File::open(path) {
+        Ok(mut file) => adj_matrix_from_reader(&mut file),
+        _ => Err(ReadAdjMatrixError::FileNotFound),
     }
-    Err(ReadAdjMatrixFileError::FileNotFound)
 }
 
-fn adj_matrix_from_reader(reader: &mut dyn Read) -> Option<Vec<Vec<u32>>> {
+fn adj_matrix_from_reader(reader: &mut dyn Read) -> Result<Vec<Vec<u32>>, ReadAdjMatrixError> {
     let buf_reader = BufReader::new(reader);
 
     let matrix: Vec<Vec<u32>> = buf_reader
@@ -171,15 +155,23 @@ fn adj_matrix_from_reader(reader: &mut dyn Read) -> Option<Vec<Vec<u32>>> {
         .collect();
 
     if matrix.len() < 1 {
-        return Some(matrix);
+        return Ok(matrix);
+    }
+
+    if matrix
+        .iter()
+        .flat_map(|row| row)
+        .any(|element| *element < 1u32)
+    {
+        return Err(ReadAdjMatrixError::ElementsMustBeGreaterThanZero);
     }
 
     let rows_length = matrix.len();
     if matrix.iter().any(|row| row.len() != rows_length) {
-        return None;
+        return Err(ReadAdjMatrixError::RowsAndColumnsCountMismatch);
     }
 
-    Some(matrix)
+    Ok(matrix)
 }
 
 fn choose_option(prompt: &str, min_value: u32, max_value: u32) -> Option<u32> {
