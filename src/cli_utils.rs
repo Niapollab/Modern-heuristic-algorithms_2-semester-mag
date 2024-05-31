@@ -17,7 +17,8 @@ pub enum ReadAlgorithmError {
 pub enum ReadAdjMatrixError {
     FileNotFound,
     RowsAndColumnsCountMismatch,
-    ElementsMustBeGreaterThanZero,
+    DiagonalElementsMustBeZero,
+    NonDiagonalElementsMustBeGreaterThanZero,
     UnableToParseUnt32,
     UnknownSource,
 }
@@ -154,20 +155,26 @@ fn adj_matrix_from_reader(reader: &mut dyn Read) -> Result<Vec<Vec<u32>>, ReadAd
         })
         .collect();
 
-    if matrix.len() < 1 {
+    let size = matrix.len();
+    if size == 0 {
         return Ok(matrix);
     }
 
-    if matrix
-        .iter()
-        .flat_map(|row| row)
-        .any(|element| *element < 1u32)
-    {
-        return Err(ReadAdjMatrixError::ElementsMustBeGreaterThanZero);
+    for row in 0..size {
+        for column in 0..size {
+            let element = matrix[row][column];
+
+            if element == 0 && row != column {
+                return Err(ReadAdjMatrixError::NonDiagonalElementsMustBeGreaterThanZero);
+            }
+
+            if row == column && element != 0 {
+                return Err(ReadAdjMatrixError::DiagonalElementsMustBeZero);
+            }
+        }
     }
 
-    let rows_length = matrix.len();
-    if matrix.iter().any(|row| row.len() != rows_length) {
+    if matrix.iter().any(|row| row.len() != size) {
         return Err(ReadAdjMatrixError::RowsAndColumnsCountMismatch);
     }
 
