@@ -10,5 +10,8 @@ fn main() {
     let adj_matrix = adj_matrix().unwrap();
 
     let solution = solver.solve(&adj_matrix);
-    println!("Solution: {solution}");
+    let score = solution.score();
+
+    println!("Way: {solution}");
+    println!("Score: {score}");
 }
