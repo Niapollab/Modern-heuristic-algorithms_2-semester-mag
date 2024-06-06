@@ -56,10 +56,10 @@ impl<'a> Display for Way<'a> {
             let (from, to) = (way[index], way[index + 1]);
             let weight = self.adj_matrix[from][to];
 
-            parts.push(from.to_string());
+            parts.push((from + 1).to_string());
             parts.push(format!(" -({weight})-> "));
         }
-        parts.push(way[right_arrows_count].to_string());
+        parts.push((way[right_arrows_count] + 1).to_string());
 
         let serialized = parts.concat();
         write!(f, "{serialized}")
