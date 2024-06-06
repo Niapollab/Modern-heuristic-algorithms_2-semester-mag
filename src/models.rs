@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{cmp::Ordering, fmt::Display};
 
 pub struct Way<'a> {
     adj_matrix: &'a Vec<Vec<u32>>,
@@ -10,7 +10,7 @@ impl<'a> Way<'a> {
     #[allow(dead_code)]
     pub fn new(adj_matrix: &'a Vec<Vec<u32>>, way: Vec<usize>) -> Self {
         let score = Self::calculate_score(adj_matrix, &way);
-        Way {
+        Self {
             adj_matrix,
             way,
             score,
@@ -65,6 +65,36 @@ impl<'a> Display for Way<'a> {
         write!(f, "{serialized}")
     }
 }
+
+impl<'a> Clone for Way<'a> {
+    fn clone(&self) -> Self {
+        Self {
+            adj_matrix: self.adj_matrix,
+            way: self.way.clone(),
+            score: self.score,
+        }
+    }
+}
+
+impl<'a> Ord for Way<'a> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.score.cmp(&other.score)
+    }
+}
+
+impl<'a> PartialOrd for Way<'a> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.score.partial_cmp(&other.score)
+    }
+}
+
+impl<'a> PartialEq for Way<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.adj_matrix == other.adj_matrix && self.way == other.way && self.score == other.score
+    }
+}
+
+impl<'a> Eq for Way<'a> {}
 
 pub trait Solver {
     fn solve<'a>(&self, adj_matrix: &'a Vec<Vec<u32>>) -> Way<'a>;

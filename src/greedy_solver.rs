@@ -18,9 +18,9 @@ impl Solver for GreedySolver {
             let next_node = adj_matrix[node]
                 .iter()
                 .enumerate()
-                .filter(|(index, &_)| !visited[*index])
+                .filter(|(index, _)| !visited[*index])
                 .min_by_key(|(_, &element)| element)
-                .map(|(index, &_)| index);
+                .map(|(index, _)| index);
 
             if let Some(next_node) = next_node {
                 node = next_node;
