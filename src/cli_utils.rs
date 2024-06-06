@@ -32,7 +32,7 @@ Enter value: ";
     if let Some(option) = choose_option(prompt, 1, 2) {
         match option {
             1 => Ok(Box::new(GreedySolver {})),
-            2 => Ok(Box::new(AntQSolver {})),
+            2 => Ok(Box::new(AntQSolver::new(1_000, 30, 1.0, 2.0, 0.1))),
             _ => Err(ReadAlgorithmError::UnknownAlgorithm),
         }
     } else {
