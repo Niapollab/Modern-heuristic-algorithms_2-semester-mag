@@ -6,7 +6,10 @@ use std::{
 
 use rand::Rng;
 
-use crate::{ant_q_solver::AntQSolver, greedy_solver::GreedySolver, models::Solver};
+use crate::{
+    ant_q_solver::AntQSolver, greedy_solver::GreedySolver, models::Solver,
+    rand_utils::random_provider,
+};
 
 #[derive(Debug)]
 pub enum ReadAlgorithmError {
@@ -23,7 +26,7 @@ pub enum ReadAdjMatrixError {
     UnknownSource,
 }
 
-pub fn solver() -> Result<Box<dyn Solver>, ReadAlgorithmError> {
+pub fn solver(random_seed: Option<u64>) -> Result<Box<dyn Solver>, ReadAlgorithmError> {
     let prompt = "Choose algorithm:
 1. Greedy algorithm
 2. Ant-Q algorithm
@@ -32,7 +35,14 @@ Enter value: ";
     if let Some(option) = choose_option(prompt, 1, 2) {
         match option {
             1 => Ok(Box::new(GreedySolver {})),
-            2 => Ok(Box::new(AntQSolver::new(1_000, 30, 1.0, 2.0, 0.1))),
+            2 => Ok(Box::new(AntQSolver::new(
+                1_000,
+                30,
+                random_seed,
+                1.0,
+                2.0,
+                0.1,
+            ))),
             _ => Err(ReadAlgorithmError::UnknownAlgorithm),
         }
     } else {
@@ -40,7 +50,7 @@ Enter value: ";
     }
 }
 
-pub fn adj_matrix() -> Result<Vec<Vec<u32>>, ReadAdjMatrixError> {
+pub fn adj_matrix(random_seed: Option<u64>) -> Result<Vec<Vec<u32>>, ReadAdjMatrixError> {
     let prompt = "Choose matrix source:
 1. From file
 2. Random
@@ -107,6 +117,7 @@ Enter value: ";
                     columns_count,
                     min_value,
                     max_value,
+                    random_seed,
                 ))
             }
             _ => Err(ReadAdjMatrixError::UnknownSource),
@@ -121,8 +132,9 @@ fn random_adj_matrix(
     columns_count: usize,
     min_value: u32,
     max_value: u32,
+    random_seed: Option<u64>,
 ) -> Vec<Vec<u32>> {
-    let mut random_provider = rand::thread_rng();
+    let mut random_provider = random_provider(random_seed);
     let mut matrix = vec![vec![0u32; columns_count]; rows_count];
 
     for row in &mut matrix {

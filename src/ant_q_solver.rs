@@ -1,6 +1,9 @@
-use rand::{distributions::Standard, Rng};
+use rand::{distributions::Standard, rngs::StdRng, Rng};
 
-use crate::models::{Solver, Way};
+use crate::{
+    models::{Solver, Way},
+    rand_utils::random_provider,
+};
 
 struct AlgorithmState<'a> {
     adj_matrix: &'a Vec<Vec<u32>>,
@@ -8,6 +11,7 @@ struct AlgorithmState<'a> {
 
     max_iteration: u32,
     pupulation_size: usize,
+    random_provider: StdRng,
 
     pheromone_importance: f64,
     destination_importance: f64,
@@ -33,12 +37,9 @@ impl<'a> Iterator for AlgorithmState<'a> {
 
         self.spread_pheromone(&population);
 
-        let best_way = population
-            .into_iter()
-            .min()
-            .unwrap();
+        let iteration_best_way = population.into_iter().min().unwrap();
+        let best_way = self.global_best_way(iteration_best_way);
 
-        let best_way = self.global_best_way(best_way);
         Some(best_way)
     }
 }
@@ -60,7 +61,7 @@ impl<'a> AlgorithmState<'a> {
     }
 
     #[inline]
-    fn build_population(&self) -> Vec<Way<'a>> {
+    fn build_population(&mut self) -> Vec<Way<'a>> {
         let pupulation_size = self.pupulation_size;
         let mut ant_ways: Vec<Way<'a>> = Vec::with_capacity(self.pupulation_size);
 
@@ -73,8 +74,8 @@ impl<'a> AlgorithmState<'a> {
     }
 
     #[inline]
-    fn generate_ant_way(&self) -> Way<'a> {
-        let mut random_provider = rand::thread_rng();
+    fn generate_ant_way(&mut self) -> Way<'a> {
+        let random_provider = &mut self.random_provider;
         let adj_matrix = self.adj_matrix;
 
         let nodes_count = adj_matrix.len();
@@ -181,6 +182,7 @@ impl<'a> AlgorithmState<'a> {
 pub struct AntQSolver {
     max_iteration: u32,
     pupulation_size: usize,
+    random_seed: Option<u64>,
     pheromone_importance: f64,
     destination_importance: f64,
     pheromone_evaporation: f64,
@@ -190,6 +192,7 @@ impl AntQSolver {
     pub fn new(
         max_iteration: u32,
         pupulation_size: usize,
+        random_seed: Option<u64>,
         pheromone_importance: f64,
         destination_importance: f64,
         pheromone_evaporation: f64,
@@ -197,6 +200,7 @@ impl AntQSolver {
         Self {
             max_iteration,
             pupulation_size,
+            random_seed,
             pheromone_importance,
             destination_importance,
             pheromone_evaporation,
@@ -214,6 +218,7 @@ impl Solver for AntQSolver {
         let state = AlgorithmState {
             adj_matrix,
             reverse_distance_matrix,
+            random_provider: random_provider(self.random_seed),
             max_iteration: self.max_iteration,
             pupulation_size: self.pupulation_size,
             pheromone_importance: self.pheromone_importance,
