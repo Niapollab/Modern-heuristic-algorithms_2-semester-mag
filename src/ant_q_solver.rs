@@ -75,44 +75,54 @@ impl<'a> AlgorithmState<'a> {
 
     #[inline]
     fn generate_ant_way(&mut self) -> Way<'a> {
-        let random_provider = &mut self.random_provider;
         let adj_matrix = self.adj_matrix;
-
         let nodes_count = adj_matrix.len();
-        let start_node = random_provider.gen_range(0..nodes_count);
+
+        let start_node = self.random_provider.gen_range(0..nodes_count);
         let mut node = start_node;
 
         let mut visited = vec![false; nodes_count];
         let mut way = Vec::with_capacity(nodes_count);
-        let probability_matrix = &self.probability_matrix;
 
         loop {
             visited[node] = true;
             way.push(node);
 
-            let mut available_ways: Vec<(usize, f64)> = (0..nodes_count)
-                .into_iter()
-                .filter(|index| !visited[*index])
-                .map(|index| (index, probability_matrix[node][index]))
-                .collect();
-
-            if available_ways.is_empty() {
-                break;
-            }
-            AlgorithmState::normalize(&mut available_ways);
-
-            let random_value: f64 = random_provider.sample(Standard);
-            node = available_ways
-                .into_iter()
-                .skip_while(|(_, element)| *element < random_value)
-                .map(|(index, _)| index)
-                .next()
-                // Can't be None if available ways distributions values are correct
-                .unwrap();
+            node = match self.find_next_node(node, &mut visited) {
+                Some(next_node) => next_node,
+                None => break,
+            };
         }
         way.push(start_node);
 
         Way::new(adj_matrix, way)
+    }
+
+    #[inline]
+    fn find_next_node(&mut self, node: usize, visited: &mut Vec<bool>) -> Option<usize> {
+        let nodes_count = self.adj_matrix.len();
+
+        let mut available_ways: Vec<(usize, f64)> = (0..nodes_count)
+            .into_iter()
+            .filter(|index| !visited[*index])
+            .map(|index| (index, self.probability_matrix[node][index]))
+            .collect();
+
+        if available_ways.is_empty() {
+            return None;
+        }
+        AlgorithmState::normalize(&mut available_ways);
+
+        let random_value: f64 = self.random_provider.sample(Standard);
+        let node = available_ways
+            .into_iter()
+            .skip_while(|(_, element)| *element < random_value)
+            .map(|(index, _)| index)
+            .next()
+            // Can't be None if available ways distributions values are correct
+            .unwrap();
+
+        Some(node)
     }
 
     #[inline]
@@ -165,16 +175,16 @@ impl<'a> AlgorithmState<'a> {
 
     #[inline]
     fn global_best_way(&mut self, candidate: Way<'a>) -> Way<'a> {
-        if let Some(best_way) = &mut self.best_way {
-            if candidate <= *best_way {
-                *best_way = candidate.clone();
-                return candidate;
-            } else {
-                return best_way.clone();
+        match self.best_way.as_mut() {
+            Some(way) if candidate <= *way => {
+                *way = candidate.clone();
+                candidate
             }
-        } else {
-            self.best_way = Some(candidate.clone());
-            return candidate;
+            None => {
+                self.best_way = Some(candidate.clone());
+                candidate
+            }
+            Some(way) => way.clone(),
         }
     }
 }

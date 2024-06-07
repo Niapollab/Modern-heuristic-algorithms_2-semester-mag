@@ -15,18 +15,16 @@ impl Solver for GreedySolver {
             visited[node] = true;
             way.push(node);
 
-            let next_node = adj_matrix[node]
+            node = match adj_matrix[node]
                 .iter()
                 .enumerate()
                 .filter(|(index, _)| !visited[*index])
                 .min_by_key(|(_, &element)| element)
-                .map(|(index, _)| index);
-
-            if let Some(next_node) = next_node {
-                node = next_node;
-            } else {
-                break;
-            }
+                .map(|(index, _)| index)
+            {
+                Some(next_node) => next_node,
+                None => break,
+            };
         }
         way.push(START_NODE);
 
