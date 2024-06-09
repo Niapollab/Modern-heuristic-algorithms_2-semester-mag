@@ -7,7 +7,9 @@ use std::{
 use rand::Rng;
 
 use crate::{
-    ant_q_solver::AntQSolver, greedy_solver::GreedySolver, models::Solver,
+    ant_q_solver::AntQSolver,
+    greedy_solver::GreedySolver,
+    models::{AdjMatrix, Solver},
     rand_utils::random_provider,
 };
 
@@ -50,7 +52,7 @@ Enter value: ";
     }
 }
 
-pub fn adj_matrix(random_seed: Option<u64>) -> Result<Vec<Vec<u32>>, ReadAdjMatrixError> {
+pub fn adj_matrix(random_seed: Option<u64>) -> Result<AdjMatrix<u32>, ReadAdjMatrixError> {
     let prompt = "Choose matrix source:
 1. From file
 2. Random
@@ -133,7 +135,7 @@ fn random_adj_matrix(
     min_value: u32,
     max_value: u32,
     random_seed: Option<u64>,
-) -> Vec<Vec<u32>> {
+) -> AdjMatrix<u32> {
     let mut random_provider = random_provider(random_seed);
     let mut matrix = vec![vec![0u32; columns_count]; rows_count];
 
@@ -146,17 +148,17 @@ fn random_adj_matrix(
     matrix
 }
 
-fn adj_matrix_from_file(path: &str) -> Result<Vec<Vec<u32>>, ReadAdjMatrixError> {
+fn adj_matrix_from_file(path: &str) -> Result<AdjMatrix<u32>, ReadAdjMatrixError> {
     match File::open(path) {
         Ok(mut file) => adj_matrix_from_reader(&mut file),
         _ => Err(ReadAdjMatrixError::FileNotFound),
     }
 }
 
-fn adj_matrix_from_reader(reader: &mut dyn Read) -> Result<Vec<Vec<u32>>, ReadAdjMatrixError> {
+fn adj_matrix_from_reader(reader: &mut dyn Read) -> Result<AdjMatrix<u32>, ReadAdjMatrixError> {
     let buf_reader = BufReader::new(reader);
 
-    let matrix: Vec<Vec<u32>> = buf_reader
+    let matrix: AdjMatrix<u32> = buf_reader
         .lines()
         .map(|line| {
             line.unwrap()

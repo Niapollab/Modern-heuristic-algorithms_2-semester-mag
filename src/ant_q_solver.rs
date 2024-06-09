@@ -1,12 +1,12 @@
 use rand::{distributions::Standard, rngs::StdRng, Rng};
 
 use crate::{
-    models::{Solver, Way},
+    models::{AdjMatrix, Solver, Way},
     rand_utils::random_provider,
 };
 
 struct AlgorithmState<'a> {
-    adj_matrix: &'a Vec<Vec<u32>>,
+    adj_matrix: &'a AdjMatrix<u32>,
     reverse_distance_matrix: Vec<Vec<f64>>,
 
     max_iteration: u32,
@@ -219,7 +219,7 @@ impl AntQSolver {
 }
 
 impl Solver for AntQSolver {
-    fn solve<'a>(&self, adj_matrix: &'a Vec<Vec<u32>>) -> Way<'a> {
+    fn solve<'a>(&self, adj_matrix: &'a AdjMatrix<u32>) -> Way<'a> {
         const PHEROMONE_INIT_STATE: f64 = 1.0;
 
         let nodes_count = adj_matrix.len();
@@ -246,7 +246,7 @@ impl Solver for AntQSolver {
 
 impl AntQSolver {
     #[inline]
-    fn build_reverse_distance_matrix(adj_matrix: &Vec<Vec<u32>>) -> Vec<Vec<f64>> {
+    fn build_reverse_distance_matrix(adj_matrix: &AdjMatrix<u32>) -> Vec<Vec<f64>> {
         let nodes_count = adj_matrix.len();
         let mut reverse_distance_matrix = vec![vec![0.0; nodes_count]; nodes_count];
 

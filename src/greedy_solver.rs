@@ -1,9 +1,9 @@
-use crate::models::{Solver, Way};
+use crate::models::{AdjMatrix, Solver, Way};
 
 pub struct GreedySolver {}
 
 impl Solver for GreedySolver {
-    fn solve<'a>(&self, adj_matrix: &'a Vec<Vec<u32>>) -> Way<'a> {
+    fn solve<'a>(&self, adj_matrix: &'a AdjMatrix<u32>) -> Way<'a> {
         const START_NODE: usize = 0;
         let nodes_count = adj_matrix.len();
 

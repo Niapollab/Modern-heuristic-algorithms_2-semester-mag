@@ -1,14 +1,16 @@
 use std::{cmp::Ordering, fmt::Display};
 
+pub type AdjMatrix<T> = Vec<Vec<T>>;
+
 pub struct Way<'a> {
-    adj_matrix: &'a Vec<Vec<u32>>,
+    adj_matrix: &'a AdjMatrix<u32>,
     way: Vec<usize>,
     score: u64,
 }
 
 impl<'a> Way<'a> {
     #[allow(dead_code)]
-    pub fn new(adj_matrix: &'a Vec<Vec<u32>>, way: Vec<usize>) -> Self {
+    pub fn new(adj_matrix: &'a AdjMatrix<u32>, way: Vec<usize>) -> Self {
         let score = Self::calculate_score(adj_matrix, &way);
         Self {
             adj_matrix,
@@ -18,7 +20,7 @@ impl<'a> Way<'a> {
     }
 
     #[allow(dead_code)]
-    pub fn adj_matrix(&self) -> &Vec<Vec<u32>> {
+    pub fn adj_matrix(&self) -> &AdjMatrix<u32> {
         &self.adj_matrix
     }
 
@@ -32,7 +34,7 @@ impl<'a> Way<'a> {
         self.score
     }
 
-    fn calculate_score(adj_matrix: &Vec<Vec<u32>>, way: &Vec<usize>) -> u64 {
+    fn calculate_score(adj_matrix: &AdjMatrix<u32>, way: &Vec<usize>) -> u64 {
         let mut sum = 0u64;
 
         for index in 0..way.len() - 1 {
@@ -97,5 +99,5 @@ impl<'a> PartialEq for Way<'a> {
 impl<'a> Eq for Way<'a> {}
 
 pub trait Solver {
-    fn solve<'a>(&self, adj_matrix: &'a Vec<Vec<u32>>) -> Way<'a>;
+    fn solve<'a>(&self, adj_matrix: &'a AdjMatrix<u32>) -> Way<'a>;
 }
