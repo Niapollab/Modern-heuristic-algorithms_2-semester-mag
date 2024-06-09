@@ -1,4 +1,4 @@
-use crate::models::{AdjMatrix, Solver, Way};
+use crate::models::{AdjMatrix, Solver, VisitedVecExt, Way};
 
 pub struct GreedySolver {}
 
@@ -15,13 +15,12 @@ impl Solver for GreedySolver {
             visited[node] = true;
             way.push(node);
 
-            node = match adj_matrix[node]
-                .iter()
-                .enumerate()
-                .filter(|(index, _)| !visited[*index])
-                .min_by_key(|(_, &element)| element)
-                .map(|(index, _)| index)
-            {
+            node = match visited.available_neighbors().min_by(|first, second| {
+                let first = adj_matrix[node][*first];
+                let second = adj_matrix[node][*second];
+
+                first.cmp(&second)
+            }) {
                 Some(next_node) => next_node,
                 None => break,
             };

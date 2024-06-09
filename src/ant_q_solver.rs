@@ -1,7 +1,7 @@
 use rand::{distributions::Standard, rngs::StdRng, Rng};
 
 use crate::{
-    models::{AdjMatrix, Solver, Way},
+    models::{AdjMatrix, Solver, VisitedVecExt, Way},
     rand_utils::random_provider,
 };
 
@@ -100,11 +100,8 @@ impl<'a> AlgorithmState<'a> {
 
     #[inline]
     fn find_next_node(&mut self, node: usize, visited: &mut Vec<bool>) -> Option<usize> {
-        let nodes_count = self.adj_matrix.len();
-
-        let mut available_ways: Vec<(usize, f64)> = (0..nodes_count)
-            .into_iter()
-            .filter(|index| !visited[*index])
+        let mut available_ways: Vec<(usize, f64)> = visited
+            .available_neighbors()
             .map(|index| (index, self.probability_matrix[node][index]))
             .collect();
 

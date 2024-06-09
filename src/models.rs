@@ -2,6 +2,18 @@ use std::{cmp::Ordering, fmt::Display};
 
 pub type AdjMatrix<T> = Vec<Vec<T>>;
 
+pub trait VisitedVecExt {
+    #[allow(dead_code)]
+    fn available_neighbors(&self) -> impl Iterator<Item = usize>;
+}
+
+impl VisitedVecExt for Vec<bool> {
+    fn available_neighbors(&self) -> impl Iterator<Item = usize> {
+        let nodes_count = self.len();
+        (0..nodes_count).into_iter().filter(|index| !self[*index])
+    }
+}
+
 pub struct Way<'a> {
     adj_matrix: &'a AdjMatrix<u32>,
     way: Vec<usize>,
