@@ -31,28 +31,31 @@ impl RngDistributionExt for StdRng {
         distribution: D,
         selector: F,
     ) -> Option<T> {
-        let mut elements: Vec<T> = elements.collect();
+        let mut distribution_sum = Default::default();
+        let mut pairs: Vec<(G, T)> = elements
+            .map(|element| {
+                let probability = selector(&element);
+                distribution_sum = distribution_sum + probability;
 
-        let size = elements.len();
+                (probability, element)
+            })
+            .collect();
+
+        let size = pairs.len();
         if size < 1 {
             return None;
         }
 
-        elements.sort_by(|first, second| selector(first).partial_cmp(&selector(second)).unwrap());
-
-        let mut distribution_sum = selector(&elements[0]);
-        for element in elements.iter().skip(1) {
-            distribution_sum = distribution_sum + selector(element);
-        }
+        pairs.sort_by(|(first, _), (second, _)| first.partial_cmp(second).unwrap());
 
         let random_value = self.sample(distribution);
         let mut acc_probability: G = Default::default();
 
-        for (index, element) in elements.into_iter().enumerate() {
-            let probability = selector(&element) / distribution_sum;
+        for (index, (probability, element)) in pairs.into_iter().enumerate() {
+            let probability = probability / distribution_sum;
             acc_probability = acc_probability + probability;
 
-            if index == size - 1 || random_value < acc_probability {
+            if random_value < acc_probability || index == size - 1 {
                 return Some(element);
             }
         }
