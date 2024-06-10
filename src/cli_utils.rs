@@ -16,6 +16,8 @@ use crate::{
 #[derive(Debug)]
 pub enum ReadAlgorithmError {
     UnknownAlgorithm,
+    UnableToParseUnt32,
+    UnableToParseUsize,
 }
 
 #[derive(Debug)]
@@ -37,19 +39,43 @@ Enter value: ";
     if let Some(option) = choose_option(prompt, 1, 2) {
         match option {
             1 => Ok(Box::new(GreedySolver {})),
-            2 => Ok(Box::new(AntQSolver::new(
-                1_000,
-                30,
-                random_seed,
-                1.0,
-                2.0,
-                0.1,
-            ))),
+            2 => match build_ant_q_solver(random_seed) {
+                Ok(solver) => Ok(Box::new(solver)),
+                Err(msg) => Err(msg),
+            },
             _ => Err(ReadAlgorithmError::UnknownAlgorithm),
         }
     } else {
         Err(ReadAlgorithmError::UnknownAlgorithm)
     }
+}
+
+pub fn build_ant_q_solver(random_seed: Option<u64>) -> Result<AntQSolver, ReadAlgorithmError> {
+    print!("Enter max iterations: ");
+    stdout().flush().unwrap();
+
+    let mut max_iterations = String::new();
+    stdin().read_line(&mut max_iterations).unwrap();
+
+    let max_iterations: u32 = match max_iterations.trim().parse() {
+        Ok(number) => number,
+        _ => return Err(ReadAlgorithmError::UnableToParseUnt32),
+    };
+
+    print!("Enter population size: ");
+    stdout().flush().unwrap();
+
+    let mut population_size = String::new();
+    stdin().read_line(&mut population_size).unwrap();
+
+    let population_size: usize = match population_size.trim().parse() {
+        Ok(number) => number,
+        _ => return Err(ReadAlgorithmError::UnableToParseUsize),
+    };
+
+    let solver = AntQSolver::new(max_iterations, population_size, random_seed, 1.0, 2.0, 0.1);
+
+    Ok(solver)
 }
 
 pub fn adj_matrix(random_seed: Option<u64>) -> Result<AdjMatrix<u32>, ReadAdjMatrixError> {
