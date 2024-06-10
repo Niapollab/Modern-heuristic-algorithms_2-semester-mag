@@ -4,48 +4,60 @@ use rand::{distributions::Distribution, rngs::StdRng, Rng, SeedableRng};
 
 pub trait RngDistributionExt {
     #[allow(dead_code)]
-    fn distribute<T: Copy + PartialOrd<T> + Add<Output = T> + Div<Output = T>, D: Distribution<T>>(
+    fn distribute_by_key<
+        T,
+        I: Iterator<Item = T>,
+        F: Fn(&T) -> G,
+        G: Default + Copy + PartialOrd + Add<Output = G> + Div<Output = G>,
+        D: Distribution<G>,
+    >(
         &mut self,
-        elements: &[T],
+        elements: I,
         distribution: D,
-    ) -> Option<usize>;
+        selector: F,
+    ) -> Option<T>;
 }
 
 impl RngDistributionExt for StdRng {
-    fn distribute<
-        T: Copy + PartialOrd<T> + Add<Output = T> + Div<Output = T>,
-        D: Distribution<T>,
+    fn distribute_by_key<
+        T,
+        I: Iterator<Item = T>,
+        F: Fn(&T) -> G,
+        G: Default + Copy + PartialOrd + Add<Output = G> + Div<Output = G>,
+        D: Distribution<G>,
     >(
         &mut self,
-        elements: &[T],
+        elements: I,
         distribution: D,
-    ) -> Option<usize> {
+        selector: F,
+    ) -> Option<T> {
+        let mut elements: Vec<T> = elements.collect();
+
         let size = elements.len();
         if size < 1 {
             return None;
         }
-        let mut elements: Vec<T> = elements.iter().copied().collect();
 
-        let mut distribution_sum = elements[0];
+        elements.sort_by(|first, second| selector(first).partial_cmp(&selector(second)).unwrap());
+
+        let mut distribution_sum = selector(&elements[0]);
         for element in elements.iter().skip(1) {
-            distribution_sum = distribution_sum + *element;
+            distribution_sum = distribution_sum + selector(element);
         }
-
-        elements[0] = elements[0] / distribution_sum;
-        for index in 1..size {
-            elements[index] = elements[index] / distribution_sum;
-            elements[index] = elements[index] + elements[index - 1];
-        }
-        elements.sort_by(|first, second| first.partial_cmp(second).unwrap());
 
         let random_value = self.sample(distribution);
-        for (index, element) in elements.iter().enumerate() {
-            if random_value < *element {
-                return Some(index);
+        let mut acc_probability: G = Default::default();
+
+        for (index, element) in elements.into_iter().enumerate() {
+            let probability = selector(&element) / distribution_sum;
+            acc_probability = acc_probability + probability;
+
+            if index == size - 1 || random_value < acc_probability {
+                return Some(element);
             }
         }
 
-        Some(size - 1)
+        None
     }
 }
 

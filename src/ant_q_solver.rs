@@ -101,21 +101,10 @@ impl<'a> AlgorithmState<'a> {
 
     #[inline]
     fn find_next_node(&mut self, node: usize, visited: &mut Vec<bool>) -> Option<usize> {
-        let available_neighbors: Vec<usize> = visited.available_neighbors().collect();
-        let raw_distribution: Vec<f64> = available_neighbors
-            .iter()
-            .map(|index| (self.probability_matrix[node][*index]))
-            .collect();
-
-        let node = match self
-            .random_provider
-            .distribute(raw_distribution.as_slice(), Standard)
-        {
-            Some(index) => available_neighbors[index],
-            None => return None,
-        };
-
-        Some(node)
+        self.random_provider
+            .distribute_by_key(visited.available_neighbors(), Standard, |key| {
+                self.probability_matrix[node][*key]
+            })
     }
 
     #[inline]
