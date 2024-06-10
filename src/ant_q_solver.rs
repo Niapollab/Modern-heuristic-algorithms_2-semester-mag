@@ -2,7 +2,7 @@ use rand::{distributions::Standard, rngs::StdRng, Rng};
 
 use crate::{
     models::{AdjMatrix, Solver, VisitedVecExt, Way},
-    rand_utils::random_provider,
+    rand_utils::{random_provider, RngDistributionExt},
 };
 
 struct AlgorithmState<'a> {
@@ -101,41 +101,21 @@ impl<'a> AlgorithmState<'a> {
 
     #[inline]
     fn find_next_node(&mut self, node: usize, visited: &mut Vec<bool>) -> Option<usize> {
-        let mut available_ways: Vec<(usize, f64)> = visited
-            .available_neighbors()
-            .map(|index| (index, self.probability_matrix[node][index]))
+        let available_neighbors: Vec<usize> = visited.available_neighbors().collect();
+        let raw_distribution: Vec<f64> = available_neighbors
+            .iter()
+            .map(|index| (self.probability_matrix[node][*index]))
             .collect();
 
-        if available_ways.is_empty() {
-            return None;
-        }
-        AlgorithmState::normalize(&mut available_ways);
-
-        let random_value: f64 = self.random_provider.sample(Standard);
-        let node = available_ways
-            .into_iter()
-            .skip_while(|(_, element)| *element < random_value)
-            .map(|(index, _)| index)
-            .next()
-            // Can't be None if available ways distributions values are correct
-            .unwrap();
+        let node = match self
+            .random_provider
+            .distribute(raw_distribution.as_slice(), Standard)
+        {
+            Some(index) => available_neighbors[index],
+            None => return None,
+        };
 
         Some(node)
-    }
-
-    #[inline]
-    fn normalize(available_ways: &mut Vec<(usize, f64)>) {
-        let distribution_sum: f64 = available_ways.iter().map(|(_, element)| element).sum();
-        let available_ways_size = available_ways.len();
-
-        available_ways[0].1 /= distribution_sum;
-        for index in 1..available_ways_size - 1 {
-            available_ways[index].1 /= distribution_sum;
-            available_ways[index].1 += available_ways[index - 1].1;
-        }
-        available_ways[available_ways_size - 1].1 = 1.0;
-
-        available_ways.sort_by(|(_, first), (_, second)| first.partial_cmp(second).unwrap());
     }
 
     #[inline]
