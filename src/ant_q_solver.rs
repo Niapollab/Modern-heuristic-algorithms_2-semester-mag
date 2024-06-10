@@ -32,19 +32,30 @@ impl<'a> Iterator for AlgorithmState<'a> {
         }
         self.iteration += 1;
 
+        let iteration = self.iteration;
+        println!("Iteration: {iteration}");
+
         self.recalculate_probability_matrix();
         let population = self.build_population();
 
         self.spread_pheromone(&population);
 
         let iteration_best_way = population.into_iter().min().unwrap();
-        let best_way = self.global_best_way(iteration_best_way);
+        println!("Iteration solution: {iteration_best_way}");
+        println!("Iteration solution score: {}", iteration_best_way.score());
 
+        let best_way = self.global_best_way(iteration_best_way);
+        println!("Global solution: {best_way}");
+        println!("Global solution score: {}", best_way.score());
+
+        println!("{}", AlgorithmState::DELIMETER);
         Some(best_way)
     }
 }
 
 impl<'a> AlgorithmState<'a> {
+    const DELIMETER: &'static str = "----------";
+
     #[inline]
     fn recalculate_probability_matrix(&mut self) {
         let nodes_count = self.adj_matrix.len();

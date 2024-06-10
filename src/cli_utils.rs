@@ -236,3 +236,12 @@ fn choose_option(prompt: &str, min_value: u32, max_value: u32) -> Option<u32> {
 
     None
 }
+
+pub fn print_matrix(adj_matrix: &AdjMatrix<u32>) {
+    for row in adj_matrix {
+        for element in row {
+            print!("{element} ");
+        }
+        println!()
+    }
+}
