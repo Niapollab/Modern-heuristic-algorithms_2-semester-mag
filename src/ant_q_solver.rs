@@ -15,6 +15,7 @@ struct AlgorithmState<'a> {
 
     pheromone_importance: f64,
     destination_importance: f64,
+    pheromone_intensity: f64,
     pheromone_evaporation: f64,
 
     iteration: u32,
@@ -141,23 +142,20 @@ impl<'a> AlgorithmState<'a> {
     fn spread_pheromone(&mut self, population: &Vec<Way<'a>>) {
         const MIN_PHEROMONE_VALUE: f64 = 1e-5;
 
-        let adj_matrix = self.adj_matrix;
-        let nodes_count = adj_matrix.len();
-
         for row in &mut self.pheromone_matrix {
             for element in row {
                 *element *= self.pheromone_evaporation;
             }
         }
 
-        let pairs_count = nodes_count - 1;
+        let pairs_count = self.adj_matrix.len() - 1;
         for ant in population {
+            let stripped_way_score = ant.score() as f64;
             for index in 0..pairs_count {
                 let way = ant.way();
                 let (from, to) = (way[index], way[index + 1]);
-                let weight = self.adj_matrix[from][to];
 
-                self.pheromone_matrix[from][to] += 1.0 / f64::from(weight);
+                self.pheromone_matrix[from][to] += self.pheromone_intensity / stripped_way_score;
             }
         }
 
@@ -192,6 +190,7 @@ pub struct AntQSolver {
     random_seed: Option<u64>,
     pheromone_importance: f64,
     destination_importance: f64,
+    pheromone_intensity: f64,
     pheromone_evaporation: f64,
 }
 
@@ -202,6 +201,7 @@ impl AntQSolver {
         random_seed: Option<u64>,
         pheromone_importance: f64,
         destination_importance: f64,
+        pheromone_intensity: f64,
         pheromone_evaporation: f64,
     ) -> Self {
         Self {
@@ -210,6 +210,7 @@ impl AntQSolver {
             random_seed,
             pheromone_importance,
             destination_importance,
+            pheromone_intensity,
             pheromone_evaporation,
         }
     }
@@ -230,6 +231,7 @@ impl Solver for AntQSolver {
             pupulation_size: self.pupulation_size,
             pheromone_importance: self.pheromone_importance,
             destination_importance: self.destination_importance,
+            pheromone_intensity: self.pheromone_intensity,
             pheromone_evaporation: self.pheromone_evaporation,
             iteration: 0,
             pheromone_matrix: vec![vec![PHEROMONE_INIT_STATE; nodes_count]; nodes_count],

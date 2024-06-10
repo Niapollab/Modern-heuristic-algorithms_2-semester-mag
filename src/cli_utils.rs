@@ -73,7 +73,15 @@ pub fn build_ant_q_solver(random_seed: Option<u64>) -> Result<AntQSolver, ReadAl
         _ => return Err(ReadAlgorithmError::UnableToParseUsize),
     };
 
-    let solver = AntQSolver::new(max_iterations, population_size, random_seed, 1.0, 2.0, 0.1);
+    let solver = AntQSolver::new(
+        max_iterations,
+        population_size,
+        random_seed,
+        1.0,
+        2.0,
+        1.0,
+        0.1,
+    );
 
     Ok(solver)
 }
