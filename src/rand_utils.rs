@@ -1,4 +1,4 @@
-use std::ops::{Add, Div};
+use std::ops::{Add, Mul};
 
 use rand::{distributions::Distribution, rngs::StdRng, Rng, SeedableRng};
 
@@ -8,7 +8,7 @@ pub trait RngDistributionExt {
         T,
         I: Iterator<Item = T>,
         F: Fn(&T) -> G,
-        G: Default + Copy + PartialOrd + Add<Output = G> + Div<Output = G>,
+        G: Default + Copy + PartialOrd + Add<Output = G> + Mul<Output = G>,
         D: Distribution<G>,
     >(
         &mut self,
@@ -23,7 +23,7 @@ impl RngDistributionExt for StdRng {
         T,
         I: Iterator<Item = T>,
         F: Fn(&T) -> G,
-        G: Default + Copy + PartialOrd + Add<Output = G> + Div<Output = G>,
+        G: Default + Copy + PartialOrd + Add<Output = G> + Mul<Output = G>,
         D: Distribution<G>,
     >(
         &mut self,
@@ -31,13 +31,13 @@ impl RngDistributionExt for StdRng {
         distribution: D,
         selector: F,
     ) -> Option<T> {
-        let mut distribution_sum = Default::default();
-        let mut pairs: Vec<(G, T)> = elements
+        let mut probability_acc = Default::default();
+        let pairs: Vec<(G, T)> = elements
             .map(|element| {
                 let probability = selector(&element);
-                distribution_sum = distribution_sum + probability;
+                probability_acc = probability_acc + probability;
 
-                (probability, element)
+                (probability_acc, element)
             })
             .collect();
 
@@ -46,16 +46,9 @@ impl RngDistributionExt for StdRng {
             return None;
         }
 
-        pairs.sort_by(|(first, _), (second, _)| first.partial_cmp(second).unwrap());
-
-        let random_value = self.sample(distribution);
-        let mut acc_probability: G = Default::default();
-
+        let random_value = self.sample(distribution) * probability_acc;
         for (index, (probability, element)) in pairs.into_iter().enumerate() {
-            let probability = probability / distribution_sum;
-            acc_probability = acc_probability + probability;
-
-            if random_value < acc_probability || index == size - 1 {
+            if random_value < probability || index == size - 1 {
                 return Some(element);
             }
         }
