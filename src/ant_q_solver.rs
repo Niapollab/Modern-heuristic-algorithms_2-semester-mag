@@ -10,7 +10,7 @@ struct AlgorithmState<'a> {
     reverse_distance_matrix: Vec<Vec<f64>>,
 
     max_iteration: u32,
-    pupulation_size: usize,
+    population_size: usize,
     random_provider: StdRng,
 
     pheromone_importance: f64,
@@ -63,10 +63,10 @@ impl<'a> AlgorithmState<'a> {
 
     #[inline]
     fn build_population(&mut self) -> Vec<Way<'a>> {
-        let pupulation_size = self.pupulation_size;
-        let mut ant_ways: Vec<Way<'a>> = Vec::with_capacity(self.pupulation_size);
+        let population_size = self.population_size;
+        let mut ant_ways: Vec<Way<'a>> = Vec::with_capacity(self.population_size);
 
-        for _ in 0..pupulation_size {
+        for _ in 0..population_size {
             let way = self.generate_ant_way();
             ant_ways.push(way);
         }
@@ -151,7 +151,7 @@ impl<'a> AlgorithmState<'a> {
 
 pub struct AntQSolver {
     max_iteration: u32,
-    pupulation_size: usize,
+    population_size: usize,
     random_seed: Option<u64>,
     pheromone_importance: f64,
     destination_importance: f64,
@@ -162,7 +162,7 @@ pub struct AntQSolver {
 impl AntQSolver {
     pub fn new(
         max_iteration: u32,
-        pupulation_size: usize,
+        population_size: usize,
         random_seed: Option<u64>,
         pheromone_importance: f64,
         destination_importance: f64,
@@ -171,7 +171,7 @@ impl AntQSolver {
     ) -> Self {
         Self {
             max_iteration,
-            pupulation_size,
+            population_size,
             random_seed,
             pheromone_importance,
             destination_importance,
@@ -193,7 +193,7 @@ impl Solver for AntQSolver {
             reverse_distance_matrix,
             random_provider: random_provider(self.random_seed),
             max_iteration: self.max_iteration,
-            pupulation_size: self.pupulation_size,
+            population_size: self.population_size,
             pheromone_importance: self.pheromone_importance,
             destination_importance: self.destination_importance,
             pheromone_intensity: self.pheromone_intensity,
