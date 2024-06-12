@@ -14,6 +14,43 @@ impl VisitedVecExt for Vec<bool> {
     }
 }
 
+struct PairIter<'a> {
+    index: usize,
+    way: &'a Vec<usize>,
+}
+
+impl<'a> Iterator for PairIter<'a> {
+    type Item = (usize, usize);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let index = self.index;
+        let way = self.way;
+        let len = way.len();
+
+        if len != 0 && index < len - 1 {
+            let edge = (way[index], way[index + 1]);
+            self.index += 1;
+            Some(edge)
+        } else {
+            None
+        }
+    }
+}
+
+pub trait WayVecExt {
+    #[allow(dead_code)]
+    fn iter_edges(&self) -> impl Iterator<Item = (usize, usize)>;
+}
+
+impl WayVecExt for Vec<usize> {
+    fn iter_edges(&self) -> impl Iterator<Item = (usize, usize)> {
+        PairIter {
+            index: 0,
+            way: &self,
+        }
+    }
+}
+
 pub struct Way<'a> {
     adj_matrix: &'a AdjMatrix<u32>,
     way: Vec<usize>,
@@ -47,12 +84,10 @@ impl<'a> Way<'a> {
     }
 
     fn calculate_score(adj_matrix: &AdjMatrix<u32>, way: &Vec<usize>) -> u64 {
-        let mut sum = 0u64;
-
-        for index in 0..way.len() - 1 {
-            let (from, to) = (way[index], way[index + 1]);
-            sum += u64::from(adj_matrix[from][to]);
-        }
+        let sum = way
+            .iter_edges()
+            .map(|(from, to)| adj_matrix[from][to] as u64)
+            .sum();
 
         sum
     }
@@ -66,8 +101,7 @@ impl<'a> Display for Way<'a> {
         let right_arrows_count = way_size - 1;
 
         let mut parts: Vec<String> = Vec::with_capacity(way_size + right_arrows_count);
-        for index in 0..right_arrows_count {
-            let (from, to) = (way[index], way[index + 1]);
+        for (from, to) in way.iter_edges() {
             let weight = self.adj_matrix[from][to];
 
             parts.push((from + 1).to_string());

@@ -1,7 +1,7 @@
 use rand::{distributions::Standard, rngs::StdRng, Rng};
 
 use crate::{
-    models::{AdjMatrix, Solver, VisitedVecExt, Way},
+    models::{AdjMatrix, Solver, VisitedVecExt, Way, WayVecExt},
     rand_utils::{random_provider, RngDistributionExt},
 };
 
@@ -117,13 +117,9 @@ impl<'a> AlgorithmState<'a> {
             }
         }
 
-        let pairs_count = self.adj_matrix.len() - 1;
         for ant in population {
             let stripped_way_score = ant.score() as f64;
-            for index in 0..pairs_count {
-                let way = ant.way();
-                let (from, to) = (way[index], way[index + 1]);
-
+            for (from, to) in ant.way().iter_edges() {
                 self.pheromone_matrix[from][to] += self.pheromone_intensity / stripped_way_score;
             }
         }
