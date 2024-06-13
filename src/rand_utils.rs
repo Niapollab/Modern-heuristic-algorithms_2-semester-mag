@@ -42,7 +42,7 @@ impl RngDistributionExt for StdRng {
             .collect();
 
         let size = pairs.len();
-        if size < 1 {
+        if size == 0 {
             return None;
         }
 

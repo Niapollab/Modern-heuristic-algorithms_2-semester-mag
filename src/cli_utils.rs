@@ -7,7 +7,7 @@ use std::{
 use rand::Rng;
 
 use crate::{
-    ant_q_solver::AntQSolver,
+    ant_q_solver::{ActionChoiceRule, AntQSolver, DelayedReinforcement},
     greedy_solver::GreedySolver,
     models::{AdjMatrix, Solver},
     rand_utils::random_provider,
@@ -74,6 +74,12 @@ pub fn build_ant_q_solver(random_seed: Option<u64>) -> Result<AntQSolver, ReadAl
     };
 
     let solver = AntQSolver::new(
+        ActionChoiceRule::PseudoRandom {
+            q_learning_importance: 1.0,
+            heuristic_importance: 2.0,
+            initial_q: 0.9,
+        },
+        DelayedReinforcement::GlobalBest,
         max_iterations,
         population_size,
         random_seed,
@@ -81,6 +87,8 @@ pub fn build_ant_q_solver(random_seed: Option<u64>) -> Result<AntQSolver, ReadAl
         2.0,
         1.0,
         0.1,
+        0.1,
+        0.3,
     );
 
     Ok(solver)

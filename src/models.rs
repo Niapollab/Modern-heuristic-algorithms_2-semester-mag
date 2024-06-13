@@ -83,6 +83,20 @@ impl<'a> Way<'a> {
         self.score
     }
 
+    #[allow(dead_code)]
+    pub fn contains(&self, from: usize, to: usize) -> bool {
+        let way = &self.way;
+
+        for index in 0..way.len() - 1 {
+            let (current_from, current_to) = (way[index], way[index + 1]);
+            if from == current_from && to == current_to {
+                return true;
+            }
+        }
+
+        false
+    }
+
     fn calculate_score(adj_matrix: &AdjMatrix<u32>, way: &Vec<usize>) -> u64 {
         let sum = way
             .iter_edges()
